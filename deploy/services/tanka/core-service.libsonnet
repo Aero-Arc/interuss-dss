@@ -102,7 +102,10 @@ local awsLoadBalancer(metadata) = base.AWSLoadBalancerWithManagedCert(metadata, 
               base.WaitForDatastore(metadata),
               base.WaitForSchema(metadata, "rid"),
               base.WaitForSchema(metadata, "scd"),
-            ],
+            ] + if metadata.datastore == 'cockroachdb' then [
+              base.WaitForCockroachMigrations(metadata),
+              base.WaitForCockroachReplication(metadata),
+            ] else [],
             soloContainer:: base.Container('core-service') {
               image: metadata.backend.image,
               imagePullPolicy: if metadata.cloud_provider == "minikube" then 'IfNotPresent' else 'Always',

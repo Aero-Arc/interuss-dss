@@ -13,6 +13,9 @@
 {{- $waitForRIDSchema := include "init-container-wait-for-schema" (dict "schemaName" "rid" "datastoreImage" $datastoreImage "datastorePort" $datastorePort "datastoreHost" $datastoreHost "cockroachdbEnabled" .Values.cockroachdb.enabled ) -}}
 {{- $waitForSCDSchema := include "init-container-wait-for-schema" (dict "schemaName" "scd" "datastoreImage" $datastoreImage "datastorePort" $datastorePort "datastoreHost" $datastoreHost "cockroachdbEnabled" .Values.cockroachdb.enabled ) -}}
 
+{{- $waitForCockroachMigrations := include "init-container-wait-for-cockroach-migrations" (dict "datastoreImage" $datastoreImage "datastorePort" $datastorePort "datastoreHost" $datastoreHost "cockroachdbEnabled" .Values.cockroachdb.enabled "ridVersion" "4.1.0" "scdVersion" "3.4.0" "auxVersion" "1.1.0" ) -}}
+{{- $waitForCockroachReplication := include "init-container-wait-for-cockroach-replication" (dict "datastoreImage" $datastoreImage "datastorePort" $datastorePort "datastoreHost" $datastoreHost "cockroachdbEnabled" .Values.cockroachdb.enabled ) -}}
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -46,6 +49,10 @@ spec:
         {{- $waitForDatastore | nindent 8 }}
         {{- $waitForRIDSchema | nindent 8 }}
         {{- $waitForSCDSchema | nindent 8 }}
+{{- if .Values.cockroachdb.enabled }}
+        {{- $waitForCockroachMigrations | nindent 8 }}
+        {{- $waitForCockroachReplication | nindent 8 }}
+{{- end }}
       containers:
         - args:
             - --accepted_jwt_audiences={{$dss.conf.hostname}}

@@ -312,4 +312,90 @@ local volumes = import 'volumes.libsonnet';
     ],
     volumeMounts: volumes.all(metadata).backendMounts,
   },
+
+  // Database existence does not mean that the schema-manager job has finished
+  // creating tables and indexes, each of which may create new ranges.
+  WaitForCockroachMigrations(metadata): {
+    name: 'wait-for-cockroach-migrations',
+    image: metadata.cockroach.image,
+    command: [
+      'sh',
+      '-c',
+      |||
+        until /cockroach/cockroach sql --certs-dir /cockroach/cockroach-certs/ --host %s --port "%s" --database rid --format raw -e "SELECT schema_version FROM schema_versions WHERE onerow_enforcer = TRUE;" | grep -qx "v%s"; do
+          echo "waiting for RID migration to reach v%s"
+          sleep 2
+        done
+        until /cockroach/cockroach sql --certs-dir /cockroach/cockroach-certs/ --host %s --port "%s" --database scd --format raw -e "SELECT schema_version FROM schema_versions WHERE onerow_enforcer = TRUE;" | grep -qx "v%s"; do
+          echo "waiting for SCD migration to reach v%s"
+          sleep 2
+        done
+        until /cockroach/cockroach sql --certs-dir /cockroach/cockroach-certs/ --host %s --port "%s" --database aux --format raw -e "SELECT schema_version FROM schema_versions WHERE onerow_enforcer = TRUE;" | grep -qx "v%s"; do
+          echo "waiting for auxiliary migration to reach v%s"
+          sleep 2
+        done
+      ||| % [
+        'cockroachdb-balanced.' + metadata.namespace,
+        metadata.cockroach.grpc_port,
+        metadata.schema_manager.desired_rid_db_version,
+        metadata.schema_manager.desired_rid_db_version,
+        'cockroachdb-balanced.' + metadata.namespace,
+        metadata.cockroach.grpc_port,
+        metadata.schema_manager.desired_scd_db_version,
+        metadata.schema_manager.desired_scd_db_version,
+        'cockroachdb-balanced.' + metadata.namespace,
+        metadata.cockroach.grpc_port,
+        metadata.schema_manager.desired_aux_db_version,
+        metadata.schema_manager.desired_aux_db_version,
+      ],
+    ],
+    volumeMounts: volumes.all(metadata).schemaMounts,
+  },
+
+  // `node status --ranges` reports every node, unlike a node-local metrics
+  // endpoint reached through the balanced service.
+  WaitForCockroachReplication(metadata): {
+    name: 'wait-for-cockroach-replication',
+    image: metadata.cockroach.image,
+    command: [
+      'sh',
+      '-c',
+      |||
+        consecutive_ready_checks=0
+        while [ "$consecutive_ready_checks" -lt 2 ]; do
+          if replication_status="$(/cockroach/cockroach node status --ranges --certs-dir /cockroach/cockroach-certs/ --host %s --port "%s" --format tsv | awk -F '\t' '
+            NR == 1 {
+              for (i = 1; i <= NF; i++) {
+                if ($i == "ranges_underreplicated") underreplicated_column = i
+                if ($i == "ranges_unavailable") unavailable_column = i
+              }
+              next
+            }
+            {
+              underreplicated += $(underreplicated_column)
+              unavailable += $(unavailable_column)
+            }
+            END {
+              if (!underreplicated_column || !unavailable_column) {
+                print "unable to read CockroachDB range replication status"
+                exit 2
+              }
+              print "CockroachDB ranges: underreplicated=" underreplicated " unavailable=" unavailable
+              exit (underreplicated == 0 && unavailable == 0 ? 0 : 1)
+            }
+          ')"; then
+            consecutive_ready_checks=$((consecutive_ready_checks + 1))
+          else
+            consecutive_ready_checks=0
+          fi
+          echo "$replication_status"
+          if [ "$consecutive_ready_checks" -lt 2 ]; then sleep 2; fi
+        done
+      ||| % [
+        'cockroachdb-balanced.' + metadata.namespace,
+        metadata.cockroach.grpc_port,
+      ],
+    ],
+    volumeMounts: volumes.all(metadata).schemaMounts,
+  },
 }
