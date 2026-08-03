@@ -13,7 +13,8 @@
 {{- $waitForRIDSchema := include "init-container-wait-for-schema" (dict "schemaName" "rid" "datastoreImage" $datastoreImage "datastorePort" $datastorePort "datastoreHost" $datastoreHost "cockroachdbEnabled" .Values.cockroachdb.enabled ) -}}
 {{- $waitForSCDSchema := include "init-container-wait-for-schema" (dict "schemaName" "scd" "datastoreImage" $datastoreImage "datastorePort" $datastorePort "datastoreHost" $datastoreHost "cockroachdbEnabled" .Values.cockroachdb.enabled ) -}}
 
-{{- $waitForCockroachMigrations := include "init-container-wait-for-cockroach-migrations" (dict "datastoreImage" $datastoreImage "datastorePort" $datastorePort "datastoreHost" $datastoreHost "cockroachdbEnabled" .Values.cockroachdb.enabled "ridVersion" "4.1.0" "scdVersion" "3.4.0" "auxVersion" "1.1.0" ) -}}
+{{- $cockroachSchemaVersions := include "dss.cockroachSchemaVersions" . | fromYaml -}}
+{{- $waitForCockroachMigrations := include "init-container-wait-for-cockroach-migrations" (dict "datastoreImage" $datastoreImage "datastorePort" $datastorePort "datastoreHost" $datastoreHost "cockroachdbEnabled" .Values.cockroachdb.enabled "ridVersion" $cockroachSchemaVersions.rid "scdVersion" $cockroachSchemaVersions.scd "auxVersion" $cockroachSchemaVersions.aux_ ) -}}
 {{- $waitForCockroachReplication := include "init-container-wait-for-cockroach-replication" (dict "datastoreImage" $datastoreImage "datastorePort" $datastorePort "datastoreHost" $datastoreHost "cockroachdbEnabled" .Values.cockroachdb.enabled ) -}}
 
 ---

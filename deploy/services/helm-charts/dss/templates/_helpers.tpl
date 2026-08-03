@@ -31,6 +31,18 @@ yugabyte
 {{- end -}}
 {{- end -}}
 
+{{- define "dss.cockroachSchemaVersions" -}}
+rid: "4.1.0"
+scd: "3.4.0"
+aux_: "1.1.0"
+{{- end -}}
+
+{{- define "dss.yugabyteSchemaVersions" -}}
+rid: "1.0.1"
+scd: "1.1.0"
+aux_: "1.1.0"
+{{- end -}}
+
 {{- define "init-container-wait-for-http" -}}
 - name: wait-for-{{.serviceName}}
   image: alpine:3.17.3

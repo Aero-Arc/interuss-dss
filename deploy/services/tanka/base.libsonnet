@@ -1,5 +1,7 @@
 local util = import 'util.libsonnet';
 local volumes = import 'volumes.libsonnet';
+local resolvedSchemaVersion(version, latestVersion) =
+  if std.asciiLower(version) == 'latest' then latestVersion else version;
 
 {
   _Object(apiVersion, kind, metadata, name):: {
@@ -316,38 +318,32 @@ local volumes = import 'volumes.libsonnet';
   // Database existence does not mean that the schema-manager job has finished
   // creating tables and indexes, each of which may create new ranges.
   WaitForCockroachMigrations(metadata): {
+    local datastoreHost = 'cockroachdb-balanced.' + metadata.namespace,
+    local waitForSchema(schema, label, version) = |||
+      until /cockroach/cockroach sql --certs-dir /cockroach/cockroach-certs/ --host %s --port "%s" --database %s --format raw -e "SELECT schema_version FROM schema_versions WHERE onerow_enforcer = TRUE;" | grep -qx "v%s"; do
+        echo "waiting for %s migration to reach v%s"
+        sleep 2
+      done
+    ||| % [
+      datastoreHost,
+      metadata.cockroach.grpc_port,
+      schema,
+      version,
+      label,
+      version,
+    ],
+    local ridVersion = resolvedSchemaVersion(metadata.schema_manager.desired_rid_db_version, metadata.schema_manager.latest_cockroach_rid_db_version),
+    local scdVersion = resolvedSchemaVersion(metadata.schema_manager.desired_scd_db_version, metadata.schema_manager.latest_cockroach_scd_db_version),
+    local auxVersion = resolvedSchemaVersion(metadata.schema_manager.desired_aux_db_version, metadata.schema_manager.latest_cockroach_aux_db_version),
     name: 'wait-for-cockroach-migrations',
     image: metadata.cockroach.image,
     command: [
       'sh',
       '-c',
-      |||
-        until /cockroach/cockroach sql --certs-dir /cockroach/cockroach-certs/ --host %s --port "%s" --database rid --format raw -e "SELECT schema_version FROM schema_versions WHERE onerow_enforcer = TRUE;" | grep -qx "v%s"; do
-          echo "waiting for RID migration to reach v%s"
-          sleep 2
-        done
-        until /cockroach/cockroach sql --certs-dir /cockroach/cockroach-certs/ --host %s --port "%s" --database scd --format raw -e "SELECT schema_version FROM schema_versions WHERE onerow_enforcer = TRUE;" | grep -qx "v%s"; do
-          echo "waiting for SCD migration to reach v%s"
-          sleep 2
-        done
-        until /cockroach/cockroach sql --certs-dir /cockroach/cockroach-certs/ --host %s --port "%s" --database aux --format raw -e "SELECT schema_version FROM schema_versions WHERE onerow_enforcer = TRUE;" | grep -qx "v%s"; do
-          echo "waiting for auxiliary migration to reach v%s"
-          sleep 2
-        done
-      ||| % [
-        'cockroachdb-balanced.' + metadata.namespace,
-        metadata.cockroach.grpc_port,
-        metadata.schema_manager.desired_rid_db_version,
-        metadata.schema_manager.desired_rid_db_version,
-        'cockroachdb-balanced.' + metadata.namespace,
-        metadata.cockroach.grpc_port,
-        metadata.schema_manager.desired_scd_db_version,
-        metadata.schema_manager.desired_scd_db_version,
-        'cockroachdb-balanced.' + metadata.namespace,
-        metadata.cockroach.grpc_port,
-        metadata.schema_manager.desired_aux_db_version,
-        metadata.schema_manager.desired_aux_db_version,
-      ],
+      std.join('\n',
+        [waitForSchema('rid', 'RID', ridVersion)] +
+        (if metadata.enableScd then [waitForSchema('scd', 'SCD', scdVersion)] else []) +
+        [waitForSchema('aux', 'auxiliary', auxVersion)]),
     ],
     volumeMounts: volumes.all(metadata).schemaMounts,
   },

@@ -92,9 +92,12 @@
   schema_manager: {
     enable: false, // NB: Automatically enabled if should_init is set to true.
     image: error 'must specify image',
-    desired_rid_db_version: '4.1.0',
-    desired_scd_db_version: '3.4.0',
-    desired_aux_db_version: '1.1.0',
+    latest_cockroach_rid_db_version:: '4.1.0',
+    latest_cockroach_scd_db_version:: '3.4.0',
+    latest_cockroach_aux_db_version:: '1.1.0',
+    desired_rid_db_version: self.latest_cockroach_rid_db_version,
+    desired_scd_db_version: self.latest_cockroach_scd_db_version,
+    desired_aux_db_version: self.latest_cockroach_aux_db_version,
   },
   evict: {
     scd: {

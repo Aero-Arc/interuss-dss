@@ -31,15 +31,24 @@ sed -i -E "s/(desired_rid_db_version: ).*/\1'$YBDB_RID',/" "${BASEDIR}/deploy/se
 sed -i -E "s/(desired_scd_db_version: ).*/\1'$YBDB_SCD',/" "${BASEDIR}/deploy/services/tanka/examples/minikube/main.jsonnet"
 sed -i -E "s/(desired_aux_db_version: ).*/\1'$AUX',/" "${BASEDIR}/deploy/services/tanka/examples/minikube/main.jsonnet"
 
-for file in "${BASEDIR}/deploy/services/tanka/metadata_base.libsonnet" "${BASEDIR}/deploy/services/tanka/examples/schema_manager/main.jsonnet" "${BASEDIR}/deploy/services/tanka/examples/minimum/main.jsonnet"; do
+sed -i -E "s/(latest_cockroach_rid_db_version:: ).*/\1'$CRDB_RID',/" "${BASEDIR}/deploy/services/tanka/metadata_base.libsonnet"
+sed -i -E "s/(latest_cockroach_scd_db_version:: ).*/\1'$CRDB_SCD',/" "${BASEDIR}/deploy/services/tanka/metadata_base.libsonnet"
+sed -i -E "s/(latest_cockroach_aux_db_version:: ).*/\1'$AUX',/" "${BASEDIR}/deploy/services/tanka/metadata_base.libsonnet"
+
+for file in "${BASEDIR}/deploy/services/tanka/examples/schema_manager/main.jsonnet" "${BASEDIR}/deploy/services/tanka/examples/minimum/main.jsonnet"; do
     sed -i -E "s/(desired_rid_db_version: ).*/\1'$CRDB_RID',/" "${file}"
     sed -i -E "s/(desired_scd_db_version: ).*/\1'$CRDB_SCD',/" "${file}"
     sed -i -E "s/(desired_aux_db_version: ).*/\1'$AUX',/" "${file}"
 done
 
 # Replace helm latests
-sed -i -E -e "s/(\\\$schemas := dict ).*}}/\1\"rid\" \"$CRDB_RID\" \"scd\" \"$CRDB_SCD\" \"aux_\" \"$AUX\" }}/" "${BASEDIR}/deploy/services/helm-charts/dss/templates/schema-manager.yaml"
-sed -i -E -e "s/(\\\$schemas = dict ).*}}/\1\"rid\" \"$YBDB_RID\" \"scd\" \"$YBDB_SCD\" \"aux_\" \"$AUX\" }}/" "${BASEDIR}/deploy/services/helm-charts/dss/templates/schema-manager.yaml"
+HELM_HELPERS="${BASEDIR}/deploy/services/helm-charts/dss/templates/_helpers.tpl"
+sed -i -E "/define \"dss.cockroachSchemaVersions\"/,/end/ s/(rid: ).*/\1\"$CRDB_RID\"/" "$HELM_HELPERS"
+sed -i -E "/define \"dss.cockroachSchemaVersions\"/,/end/ s/(scd: ).*/\1\"$CRDB_SCD\"/" "$HELM_HELPERS"
+sed -i -E "/define \"dss.cockroachSchemaVersions\"/,/end/ s/(aux_: ).*/\1\"$AUX\"/" "$HELM_HELPERS"
+sed -i -E "/define \"dss.yugabyteSchemaVersions\"/,/end/ s/(rid: ).*/\1\"$YBDB_RID\"/" "$HELM_HELPERS"
+sed -i -E "/define \"dss.yugabyteSchemaVersions\"/,/end/ s/(scd: ).*/\1\"$YBDB_SCD\"/" "$HELM_HELPERS"
+sed -i -E "/define \"dss.yugabyteSchemaVersions\"/,/end/ s/(aux_: ).*/\1\"$AUX\"/" "$HELM_HELPERS"
 
 # Generate libsonnet files with list of migrations
 cat <<EOF > rid.libsonnet
