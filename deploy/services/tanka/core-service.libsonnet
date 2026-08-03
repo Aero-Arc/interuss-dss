@@ -102,7 +102,7 @@ local awsLoadBalancer(metadata) = base.AWSLoadBalancerWithManagedCert(metadata, 
               base.WaitForDatastore(metadata),
               base.WaitForSchema(metadata, "rid"),
               base.WaitForSchema(metadata, "scd"),
-            ] + if metadata.datastore == 'cockroachdb' then [
+            ] + if metadata.datastore == 'cockroachdb' && metadata.waitForCockroachReplication then [
               base.WaitForCockroachMigrations(metadata),
               base.WaitForCockroachReplication(metadata),
             ] else [],

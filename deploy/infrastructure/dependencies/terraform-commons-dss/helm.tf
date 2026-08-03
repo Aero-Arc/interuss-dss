@@ -68,6 +68,7 @@ resource "local_file" "helm_chart_values" {
         publicEndpoint                   = "https://${var.app_hostname}"
         enableScd                        = var.enable_scd
         enableScdGlobalLock              = var.enable_scd_global_lock
+        waitForCockroachReplication      = var.wait_for_cockroach_replication
         enableTimeBasedNotificationIndex = var.enable_time_based_notification_index
         enableDssMetrics                 = var.enable_dss_metrics
         locality                         = "zone=${var.locality}"
@@ -277,6 +278,7 @@ resource "local_file" "helm_chart_values" {
         publicEndpoint                   = "https://${var.app_hostname}"
         enableScd                        = var.enable_scd
         enableScdGlobalLock              = var.enable_scd_global_lock
+        waitForCockroachReplication      = var.wait_for_cockroach_replication
         enableTimeBasedNotificationIndex = var.enable_time_based_notification_index
         enableDssMetrics                 = var.enable_dss_metrics
         locality                         = "zone=${var.locality}"

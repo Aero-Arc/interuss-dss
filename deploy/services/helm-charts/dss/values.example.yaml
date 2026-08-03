@@ -13,6 +13,8 @@ dss:
     publicEndpoint: https://dss.example.com
     enableScd: true
     enableScdGlobalLock: false
+    # Enable for benchmarks that must not start until CockroachDB is fully replicated.
+    waitForCockroachReplication: false
     enableTimeBasedNotificationIndex: false
     enableDssMetrics: false
     locality: zone=interuss-example-google-ew1

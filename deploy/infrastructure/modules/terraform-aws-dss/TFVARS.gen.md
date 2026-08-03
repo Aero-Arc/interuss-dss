@@ -294,6 +294,10 @@ and prevent you from joining an existing pool.</p>
 <p>Example: <code>true</code></p>
 <br/>Default value: <code>none</code></td>
             </tr><tr>
+                <td>wait_for_cockroach_replication (<code>bool</code>)</td>
+                <td><p>Enable a CockroachDB startup barrier that waits for DSS schema migrations and range replication before starting new core-service pods. Intended for benchmarks and other deployments that require a fully replicated datastore before accepting traffic.</p>
+<br/>Default value: <code>false</code></td>
+            </tr><tr>
                 <td>yugabyte_cloud (<code>string</code>)</td>
                 <td><p>Cloud of yugabyte instances, used for partionning.</p>
 <p>Should be set to dss unless you're doing advanced partitionning.</p>

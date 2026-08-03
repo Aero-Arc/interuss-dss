@@ -302,6 +302,13 @@ variable "enable_scd_global_lock" {
 }
 
 
+variable "wait_for_cockroach_replication" {
+  type        = bool
+  description = "Enable a CockroachDB startup barrier that waits for DSS schema migrations and range replication before starting new core-service pods. Intended for benchmarks and other deployments that require a fully replicated datastore before accepting traffic."
+  default     = false
+}
+
+
 variable "enable_time_based_notification_index" {
   type        = bool
   description = "Set this boolean to true to use a time-based notification index when working with RID and SCD subscriptions. Must be enabled on all instances part of the pool."

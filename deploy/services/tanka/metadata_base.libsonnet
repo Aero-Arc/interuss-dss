@@ -9,6 +9,8 @@
   single_cluster: false,
   enableScd: false,
   enableScdGlobalLock: false,
+  // Enable for benchmarks that must not start until CockroachDB is fully replicated.
+  waitForCockroachReplication: false,
   enableTimeBasedNotificationIndex: false,
   enableDssMetrics: false,
   datastore: 'cockroachdb',

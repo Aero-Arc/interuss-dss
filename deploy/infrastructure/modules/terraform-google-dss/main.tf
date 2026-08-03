@@ -61,6 +61,7 @@ module "terraform-commons-dss" {
   enable_monitoring                    = var.enable_monitoring
   enable_scd                           = var.enable_scd
   enable_scd_global_lock               = var.enable_scd_global_lock
+  wait_for_cockroach_replication       = var.wait_for_cockroach_replication
   enable_time_based_notification_index = var.enable_time_based_notification_index
   enable_dss_metrics                   = var.enable_dss_metrics
   prometheus_hostname                  = var.prometheus_hostname

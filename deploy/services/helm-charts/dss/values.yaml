@@ -3,6 +3,7 @@
 dss:
   conf:
     enableScd: true
+    waitForCockroachReplication: false
     evict:
       scd:
           enableCron: false
