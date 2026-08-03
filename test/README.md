@@ -18,6 +18,16 @@ make test-go-units-crdb
 ```
 
 ## Integration tests
+
+The CockroachDB replication-readiness test starts a temporary three-node
+CockroachDB cluster, verifies that the readiness gate blocks while ranges are
+under-replicated, and verifies that it passes after replication completes. Run
+it from the repository root with:
+
+```shell script
+make test-cockroach-replication-readiness
+```
+
 For tests that benefit from being run in a fully-constructed environment, the
 `make test-e2e` from the repo root folder sets up a full environment and runs
 the prober tests in that environment.  Docker is the only  prerequisite to

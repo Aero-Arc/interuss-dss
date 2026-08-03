@@ -143,7 +143,7 @@ dummy_oauth_api: openapi-to-go-server
 # ---
 
 .PHONY: check-dss
-check-dss: evaluate-tanka test-go-units test-go-units-crdb test-e2e
+check-dss: evaluate-tanka test-go-units test-go-units-crdb test-cockroach-replication-readiness test-e2e
 
 .PHONY: test-go-units
 test-go-units:
@@ -167,6 +167,14 @@ test-go-units-crdb: cleanup-test-go-units-crdb
 cleanup-test-go-units-crdb:
 	@docker stop dss-crdb-for-testing > /dev/null 2>&1 || true
 	@docker rm dss-crdb-for-testing > /dev/null 2>&1 || true
+
+.PHONY: test-cockroach-replication-readiness
+test-cockroach-replication-readiness:
+	docker container run --rm \
+		-v "$(CURDIR)/test/cockroach-replication-readiness/test.sh:/test.sh:ro" \
+		--entrypoint sh \
+		cockroachdb/cockroach:v24.1.3 \
+		/test.sh
 
 .PHONY: build-dss
 build-dss:
@@ -243,7 +251,7 @@ down-locally:
 
 # This mirrors the dss-tests continuous integration workflow job (.github/workflows/ci.yml)
 .PHONY: dss-tests
-dss-tests: evaluate-tanka test-go-units test-go-units-crdb build-dss down-locally start-locally probe-locally collect-local-logs down-locally
+dss-tests: evaluate-tanka test-go-units test-go-units-crdb test-cockroach-replication-readiness build-dss down-locally start-locally probe-locally collect-local-logs down-locally
 
 .PHONY: evaluate-tanka
 evaluate-tanka:

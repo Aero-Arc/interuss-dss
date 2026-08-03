@@ -22,6 +22,8 @@ Before a pull request can be merged into the master branch, it must pass all aut
 
 ### Go unit tests with CockroachDB (`make test-go-units-crdb`)
 
+### CockroachDB replication readiness (`make test-cockroach-replication-readiness`)
+
 ### Build `dss` image (`make build-dss`)
 
 ### Tear down any pre-existing local DSS instance (`make down-locally`)

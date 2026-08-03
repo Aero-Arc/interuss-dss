@@ -66,6 +66,8 @@ jobs:
       run: make test-go-units
     - name: Go unit tests with CockroachDB
       run: make test-go-units-crdb
+    - name: CockroachDB replication readiness
+      run: make test-cockroach-replication-readiness
     - name: Build dss image
       run: make build-dss
     - name: Tear down any pre-existing local DSS instance
